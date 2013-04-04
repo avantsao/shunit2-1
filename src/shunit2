@@ -913,7 +913,7 @@ _shunit_generateReport()
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite errors="${_shunit_errors_}" failures="${_shunit_failures_}" hostname="$(hostname)" name="${__shunit_suite_name}" tests="${__shunit_testsTotal}" time="${__shunit_suite_duration}" timestamp="${__shunit_suite_timestamp}">
   ${__shunit_cases}
-  <properties>${_shunit_env_}</properties>
+  <!-- <properties>${_shunit_env_}</properties> -->
   <system-out><![CDATA[$(cat ${__shunit_system_out} | sed 's/</&lg;/g;s/>/&gt;/g')]]></system-out>
   <system-err><![CDATA[$(cat ${__shunit_system_err} | sed 's/</&lg;/g;s/>/&gt;/g')]]></system-err>
 </testsuite>
