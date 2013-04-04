@@ -909,17 +909,22 @@ _shunit_generateReport()
 #          && _shunit_ok_=${SHUNIT_FALSE}
 
   if [ -n "${SHUNIT_OUTPUTDIR:-}" ]; then
-    cat << EOF >> "${SHUNIT_OUTPUTDIR}/TEST-${__shunit_suite_name}.xml"
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite errors="${_shunit_errors_}" failures="${_shunit_failures_}" hostname="$(hostname)" name="${__shunit_suite_name}" tests="${__shunit_testsTotal}" time="${__shunit_suite_duration}" timestamp="${__shunit_suite_timestamp}">
-  ${__shunit_cases}
-  <!-- <properties>${_shunit_env_}</properties> -->
-  <system-out><![CDATA[$(cat ${__shunit_system_out} | sed 's/</&lg;/g;s/>/&gt;/g')]]></system-out>
-  <system-err><![CDATA[$(cat ${__shunit_system_err} | sed 's/</&lg;/g;s/>/&gt;/g')]]></system-err>
-</testsuite>
+    if [ -f "${SHUNIT_OUTPUTDIR}/TEST-${__shunit_suite_name}.xml" ]; then
+      cat << EOF >> "${SHUNIT_OUTPUTDIR}/TEST-${__shunit_suite_name}.xml"
+    <testsuite errors="${_shunit_errors_}" failures="${_shunit_failures_}" hostname="$(hostname)" name="${__shunit_suite_name}" tests="${__shunit_testsTotal}" time="${__shunit_suite_duration}" timestamp="${__shunit_suite_timestamp}">
+        ${__shunit_cases}
+        <!-- <properties>${_shunit_env_}</properties> -->
+        <system-out><![CDATA[$(cat ${__shunit_system_out} | sed 's/</&lg;/g;s/>/&gt;/g')]]></system-out>
+        <system-err><![CDATA[$(cat ${__shunit_system_err} | sed 's/</&lg;/g;s/>/&gt;/g')]]></system-err>
+    </testsuite>
 EOF
+    else
+      cat << EOF >> "${SHUNIT_OUTPUTDIR}/TEST-${__shunit_suite_name}.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+EOF
+    fi
   fi
-
   if [ ${SHUNIT_STDOUT} -eq ${SHUNIT_TRUE} ]; then
     echo
     if [ ${__shunit_testsTotal} -eq 1 ]; then
@@ -956,6 +961,17 @@ EOF
     echo ${_shunit_msg_}
   fi
   __shunit_reportGenerated=${SHUNIT_TRUE}
+
+# Properly close the xml reports with </testsuites>
+    if [ -n "${SHUNIT_OUTPUTDIR:-}" ]; then
+        for xml in ${SHUNIT_OUTPUTDIR}/*.xml; do
+        sed -i -e 's/<\/testsuites>//' $xml
+        echo "Processing $xml file..."
+          cat << EOF >> "$xml"
+    </testsuites>
+EOF
+        done
+    fi
 
   unset _shunit_failures_ _shunit_msg_ _shunit_ok_ _shunit_skipped_
 }
