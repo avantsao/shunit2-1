@@ -909,7 +909,6 @@ _shunit_generateReport()
 #          && _shunit_ok_=${SHUNIT_FALSE}
 
   if [ -n "${SHUNIT_OUTPUTDIR:-}" ]; then
-    if [ -f "${SHUNIT_OUTPUTDIR}/TEST-${__shunit_suite_name}.xml" ]; then
       cat << EOF >> "${SHUNIT_OUTPUTDIR}/TEST-${__shunit_suite_name}.xml"
     <testsuite errors="${_shunit_errors_}" failures="${_shunit_failures_}" hostname="$(hostname)" name="${__shunit_suite_name}" tests="${__shunit_testsTotal}" time="${__shunit_suite_duration}" timestamp="${__shunit_suite_timestamp}">
         ${__shunit_cases}
@@ -918,12 +917,6 @@ _shunit_generateReport()
         <system-err><![CDATA[$(cat ${__shunit_system_err} | sed 's/</\&lt;/g;s/>/\&gt;/g;s/\"/\&amp;/g')]]></system-err>
     </testsuite>
 EOF
-    else
-      cat << EOF >> "${SHUNIT_OUTPUTDIR}/TEST-${__shunit_suite_name}.xml"
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuites>
-EOF
-    fi
   fi
   if [ ${SHUNIT_STDOUT} -eq ${SHUNIT_TRUE} ]; then
     echo
@@ -962,15 +955,18 @@ EOF
   fi
   __shunit_reportGenerated=${SHUNIT_TRUE}
 
-# Properly close the xml reports with </testsuites>
+#Properly format the xml reports so that they conform to the JUnit XSD (https://svn.jenkins-ci.org/trunk/hudson/dtkit/dtkit-format/dtkit-junit-model/src/main/resources/com/thalesgroup/dtkit/junit/model/xsd/junit-4.xsd)
     if [ -n "${SHUNIT_OUTPUTDIR:-}" ]; then
         for xml in ${SHUNIT_OUTPUTDIR}/*.xml; do
+        # Prepend the xml reports with <?xml version="1.0" encoding="UTF-8"?> and <testsuites>
+        sed -i '1i<?xml version="1.0" encoding="UTF-8"?><testsuites>' $xml
+        # Properly close the xml reports with </testsuites>
         sed -i -e 's/<\/testsuites>//' $xml
         echo "Processing $xml file..."
           cat << EOF >> "$xml"
-    </testsuites>
+</testsuites>
 EOF
-        done
+       done
     fi
 
   unset _shunit_failures_ _shunit_msg_ _shunit_ok_ _shunit_skipped_
